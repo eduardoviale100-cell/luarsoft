@@ -1,0 +1,42 @@
+<!-- sidebar.php -->
+<style>
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 230px;
+        height: 100vh;
+        background: #0d6efd;
+        padding-top: 20px;
+        color: white;
+        overflow-y: auto;
+    }
+
+    .sidebar a {
+        color: white;
+        text-decoration: none;
+        display: block;
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+
+    .sidebar a:hover {
+        background: rgba(255,255,255,0.2);
+    }
+
+    /* Contenido a la derecha */
+    .content {
+        margin-left: 240px; /* un poco más que el ancho del sidebar */
+        padding: 20px;
+    }
+</style>
+
+<div class="sidebar">
+    <h4 class="text-center mb-4">Mi Panel</h4>
+
+    <a href="index.php">Inicio</a>
+    <a href="pos.php">POS</a>
+    <a href="clientes.php">Clientes</a>
+    <a href="productos.php">Productos</a>
+    <a href="ventas.php">Ventas</a>
+</div>

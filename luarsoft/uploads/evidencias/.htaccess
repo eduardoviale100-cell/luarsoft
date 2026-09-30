@@ -1,0 +1,6 @@
+# Permite servir los videos de evidencia pero bloquea la ejecución de PHP
+# dentro de esta carpeta de subida, por seguridad.
+<FilesMatch "\.(php|phtml|php\d)$">
+    Require all denied
+</FilesMatch>
+Options -Indexes

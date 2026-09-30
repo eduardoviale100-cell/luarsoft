@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>LuarSoft - Inicio</title>
+    <link rel="stylesheet" href="bootstrap.min.css">
+
+    <style>
+        :root {
+            --verde: #4caf50;
+            --verde-hover: #6cd86c;
+            --verde-oscuro: #3c8b3e;
+            --gris-fondo: #f4f6f7;
+            --texto: #2c3e50;
+            --navbar-height: 56px;
+            --sidebar-width: 240px;
+            --footer-height: 40px;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: var(--gris-fondo);
+            font-family: Arial, sans-serif;
+            color: var(--texto);
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background-color: var(--verde);
+            border-bottom: 2px solid var(--verde-oscuro);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            height: var(--navbar-height);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .navbar-brand img {
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .nav-link {
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .app-wrapper { 
+            display: flex;
+            min-height: calc(100vh - var(--navbar-height)); 
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            padding: 20px 12px;
+            position: fixed; 
+            top: var(--navbar-height);
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            border-right: 2px solid var(--verde-oscuro);
+            box-shadow: 0 0 10px rgba(0,0,0,0.08);
+            z-index: 999;
+        }
+
+        /* BOTONES DEL SIDEBAR */
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: white;
+            border: 1px solid var(--verde);
+            color: #000;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.25s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar .btn:hover {
+            background-color: var(--verde-hover);
+            transform: translateX(3px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+        }
+
+        .btn-danger {
+            background-color: #d9534f !important;
+            border: none !important;
+            color: white !important;
+            box-shadow: none !important;
+        }
+
+        /* SUBMENÚS */
+        #clientesSubmenu .btn,
+        #productosSubmenu .btn,
+        #ventasSubmenu .btn,
+        #ventasRapidasSubmenu .btn { /* AÑADIDO: Estilo para submenú de Ventas Rápidas */
+            font-size: 0.92em;
+            margin-top: 6px;
+            border-left: 3px solid var(--verde);
+        }
+
+        /* ANIMACIÓN FLECHA */
+        .flecha {
+            font-size: 0.8em;
+            transition: transform 0.3s ease;
+        }
+        .rotate {
+            transform: rotate(90deg);
+        }
+
+        /* MAIN */
+        .main-content-wrapper {
+            margin-left: var(--sidebar-width);
+            padding-top: var(--navbar-height);
+            padding-bottom: var(--footer-height);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        main {
+            padding: 3rem;
+            text-align: center;
+        }
+
+        main h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--verde-oscuro);
+        }
+
+        /* FOOTER */
+        footer {
+            background-color: #212529;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed; 
+            bottom: 0;
+            width: calc(100% - var(--sidebar-width));
+            left: var(--sidebar-width);
+            height: var(--footer-height);
+            font-size: 0.9em;
+            z-index: 999;
+        }
+
+        footer a {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; position: relative; top: 0; }
+            .main-content-wrapper { margin-left: 0; padding-top: 0; }
+            footer { width: 100%; left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="1.html">
+            <img src="eros.jpg" alt="Logo">
+        </a>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="mostrar_articulo.php">Órdenes</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Clientes</a></li>
+                <li class="nav-item"><a class="nav-link" href="tecnicos.php">Técnicos</a></li>
+                <li class="nav-item"><a class="nav-link" href="proveedores.php">Proveedores</a></li>
+                <li class="nav-item"><a class="nav-link" href="reportes.php">Reportes</a></li>
+                <li class="nav-item"><a class="nav-link" href="pos.php">POS</a></li>
+                <li class="nav-item"><a class="nav-link" href="logout.php">Salir</a></li>
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+<div class="app-wrapper"> 
+
+    <div class="sidebar">
+
+        <a href="mostrar_articulo.php" class="btn">🖨️ Órdenes</a>
+
+        <button class="btn" id="ventasRapidasBtn">
+            💵 Ventas Rápidas (POS)
+            <span class="flecha">▶</span>
+        </button>
+
+        <div id="ventasRapidasSubmenu" style="display: none; padding-left: 15px;">
+            <a href="pos.php" class="btn">📃 Boleta de Venta</a> 
+            <a href="nota_venta.php" class="btn">📄 Nota de Venta</a>
+            <a href="factura.php" class="btn">🧾 Factura</a>
+        </div>
+        
+        <button class="btn" id="clientesBtn">
+            👤 Clientes 
+            <span class="flecha">▶</span>
+        </button>
+
+        <div id="clientesSubmenu" style="display: none; padding-left: 15px;">
+            <a href="clientes.php" class="btn">➕ Añadir Cliente</a>
+            <a href="listado_clientes.php" class="btn">📋 Listado</a>
+            <a href="buscar_clientes.php" class="btn">🔎 Buscar Cliente</a>
+        </div>
+
+        <button class="btn" id="productosBtn">
+            📦 Productos
+            <span class="flecha">▶</span>
+        </button>
+
+        <div id="productosSubmenu" style="display: none; padding-left: 15px;">
+            <a href="añadir_producto.php" class="btn">➕ Añadir Producto</a>
+            <a href="listado_productos.php" class="btn">📋 Lista de productos</a>
+            <a href="control_stock.php" class="btn">📦 Control de Stock</a>
+        </div>
+        
+        <button class="btn" id="ventasBtn">
+            💰 Ventas
+            <span class="flecha">▶</span>
+        </button>
+
+        <div id="ventasSubmenu" style="display: none; padding-left: 15px;">
+            <a href="lista_boletas.php" class="btn">📃 Listado Boletas</a>
+            <a href="lista_notas_venta.php" class="btn">📄 Listado Notas de Venta</a>
+            <a href="lista_facturas.php" class="btn">🧾 Listado Facturas</a>
+        </div>
+        
+        <a href="tecnicos.php" class="btn">🧰 Técnicos</a>
+        <a href="proveedores.php" class="btn">🏭 Proveedores</a>
+        <a href="reportes.php" class="btn">📊 Reportes</a>
+        <a href="logout.php" class="btn btn-danger">🚪 Cerrar Sesión</a>
+
+    </div>
+    
+    <div class="main-content-wrapper">
+        <main>
+            <h2>Bienvenido al Sistema de Reparación de Impresoras</h2>
+            <p class="text-muted">Administra órdenes, clientes, técnicos, proveedores, reportes y ventas POS desde un solo lugar.</p>
+            <br><br><br>
+            <p>Fin del contenido de prueba.</p>
+        </main>
+    </div>
+
+</div>
+
+<footer>
+    Sistema desarrollado por 
+    <a href="#">CWSSy</a> | <a href="#">LuarSoft</a>
+</footer>
+
+<script>
+    // CLIENTES
+    document.getElementById("clientesBtn").addEventListener("click", function () {
+        const submenu = document.getElementById("clientesSubmenu");
+        const flecha = this.querySelector(".flecha");
+
+        submenu.style.display = submenu.style.display === "none" ? "block" : "none";
+        flecha.classList.toggle("rotate");
+    });
+
+    // PRODUCTOS
+    document.getElementById("productosBtn").addEventListener("click", function () {
+        const submenu = document.getElementById("productosSubmenu");
+        const flecha = this.querySelector(".flecha");
+
+        submenu.style.display = submenu.style.display === "none" ? "block" : "none";
+        flecha.classList.toggle("rotate");
+    });
+    
+    // VENTAS (LISTADOS)
+    document.getElementById("ventasBtn").addEventListener("click", function () {
+        const submenu = document.getElementById("ventasSubmenu");
+        const flecha = this.querySelector(".flecha");
+
+        submenu.style.display = submenu.style.display === "none" ? "block" : "none";
+        flecha.classList.toggle("rotate");
+    });
+    
+    // VENTAS RÁPIDAS (NUEVO SCRIPT)
+    document.getElementById("ventasRapidasBtn").addEventListener("click", function () {
+        const submenu = document.getElementById("ventasRapidasSubmenu");
+        const flecha = this.querySelector(".flecha");
+
+        submenu.style.display = submenu.style.display === "none" ? "block" : "none";
+        flecha.classList.toggle("rotate");
+    });
+</script>
+
+<script src="bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

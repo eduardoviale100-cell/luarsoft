@@ -1,0 +1,177 @@
+<?php
+// Obtener datos enviados por GET
+$cliente = $_GET['nombre_cliente'] ?? 'Público General';
+$documento = $_GET['documento_cliente'] ?? '99999999';
+$numero_boleta = $_GET['numero_boleta'] ?? 'B001 - 000000';
+$fecha = $_GET['fecha'] ?? date('Y-m-d');
+$total = floatval($_GET['total_venta'] ?? '0.00'); // Aseguramos que sea float para cálculos
+
+// Recuperar productos (JSON)
+$productos = json_decode($_GET['productos'] ?? '[]', true);
+
+// Cálculos de impuestos
+$igv_rate = 0.18;
+$subtotal = round($total / (1 + $igv_rate), 2);
+$igv = $total - $subtotal;
+
+// Convertir fecha y hora
+$fechaMostrar = date("d/m/Y", strtotime($fecha));
+$horaMostrar = date("h:i A");
+
+// Función para convertir número a texto (simplificada)
+function numeroATextoSimple($numero) {
+    $numero = number_format($numero, 2, '.', '');
+    $partes = explode('.', $numero);
+    $soles = $partes[0];
+    $centimos = $partes[1];
+    return "S/ " . $soles . " CON " . $centimos . "/100 SOLES";
+}
+$texto_total = numeroATextoSimple($total);
+?>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ticket de Venta - <?php echo $numero_boleta; ?></title>
+
+<style>
+    /* ------------------------------------------- */
+    /* ESTILOS CLAVE PARA IMPRESORA TÉRMICA (80mm) */
+    /* ------------------------------------------- */
+    body {
+        /* Ancho estándar para impresoras térmicas de 80mm */
+        width: 80mm; 
+        /* Márgenes cero para usar todo el ancho de la impresora */
+        margin: 0; 
+        padding: 5px; /* Pequeño padding interno para que el texto no toque el borde */
+        font-family: monospace;
+        font-size: 11px; /* Letra pequeña y compacta */
+        line-height: 1.2; /* Espaciado ajustado */
+    }
+    .center { text-align: center; }
+    .line {
+        border-top: 1px dashed #000;
+        margin: 6px 0;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    .totales td { padding: 3px 0; }
+    
+    /* Configuración de impresión: ELIMINAR MÁRGENES DE PÁGINA */
+    @media print {
+        @page {
+            margin: 0;
+        }
+        body {
+            /* Asegura que el contenido use el ancho completo en la impresión */
+            width: 100%; 
+            margin: 0;
+            padding: 0; /* Quitamos padding en la impresión para maximizar el área */
+        }
+    }
+    /* Estilos para el detalle de productos: usar fuente monoespaciada con espacio preformateado */
+    .detalle { 
+        white-space: pre; 
+        margin: 0;
+    }
+</style>
+
+</head>
+<body>
+
+<div class="center">
+    <!-- Información de la empresa -->
+    <b>HYDRA COMPANY</b><br>
+    LUARSOFT<br>
+    EMPRESA DEMO SAC<br>
+    RUC: 0000000000<br>
+    Dirección: Av. Ejemplo 123<br>
+    Teléf: 900000000<br>
+</div>
+
+<div class="line"></div>
+
+<div class="center">
+    <b>BOLETA DE VENTA ELECTRÓNICA</b><br>
+    <?php echo $numero_boleta; ?>
+</div>
+
+<div class="line"></div>
+
+<!-- Información del cliente y transacción -->
+<b>FECHA:</b> <?php echo $fechaMostrar; ?><br>
+<b>HORA:</b> <?php echo $horaMostrar; ?><br>
+<b>CLIENTE:</b> <?php echo $cliente; ?><br>
+<b>DNI:</b> <?php echo $documento; ?><br>
+
+<div class="line"></div>
+
+<!-- Encabezado de la lista de productos (alineado con el formato de str_pad) -->
+<div class="detalle">
+<b>CANT DESCRIPCIÓN         P.UNIT  TOTAL</b>
+</div>
+
+<?php 
+// Formateo manual para simular columnas de ticket con str_pad
+foreach ($productos as $p): 
+    // Cantidad (4 caracteres, izquierda)
+    $cant = str_pad($p['cant'], 4, ' ', STR_PAD_LEFT);
+    // Descripción (19 caracteres, limitado)
+    $desc = substr($p['desc'], 0, 19); 
+    $desc = str_pad($desc, 19, ' ');
+    // Precio Unitario (6 caracteres, izquierda)
+    $pu = str_pad(number_format($p['pu'], 2), 6, ' ', STR_PAD_LEFT);
+    // Total (6 caracteres, izquierda)
+    $tot = str_pad(number_format($p['total'], 2), 6, ' ', STR_PAD_LEFT);
+?>
+    <div class="detalle">
+<?php 
+    // Imprimir línea de detalle
+    echo "$cant $desc $pu $tot";
+?>
+    </div>
+<?php endforeach; ?>
+
+<div class="line"></div>
+
+<!-- Totales y desglose de impuestos -->
+<table class="totales">
+    <tr>
+        <td>TOTAL GRAVADO (S/)</td>
+        <td style="text-align:right;"><?php echo number_format($subtotal, 2); ?></td>
+    </tr>
+    <tr>
+        <td>I.G.V (S/)</td>
+        <td style="text-align:right;"><?php echo number_format($igv, 2); ?></td>
+    </tr>
+    <tr>
+        <td><b>TOTAL (S/)</b></td>
+        <td style="text-align:right;"><b><?php echo number_format($total, 2); ?></b></td>
+    </tr>
+</table>
+
+<div class="line"></div>
+
+<!-- Total en letras -->
+<b>SON:</b> <?php echo strtoupper($texto_total); ?><br><br>
+
+<!-- Información de pago y condición -->
+<b>FORMA DE PAGO:</b> EFECTIVO<br>
+<b>CONDICIÓN:</b> CONTADO<br>
+
+<div class="line"></div>
+
+<!-- Mensaje final -->
+<div class="center">
+    Representación impresa de la BOLETA DE VENTA ELECTRÓNICA<br>
+    Puede validar en SUNAT<br>
+</div>
+
+<script>
+    // Imprimir automáticamente al cargar la página
+    window.onload = function() {
+        window.print();
+    };
+</script>
+
+</body>
+</html>

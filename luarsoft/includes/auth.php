@@ -1,41 +1,51 @@
 <?php
 /**
- * includes/auth.php
- * ------------------------------------------------------------------
- * Debe incluirse (después de config/conexion.php) en cada página
- * protegida del sistema. Si no hay sesión de usuario activa,
- * redirige al login. Esto no existía de forma explícita en el
- * sistema original (ninguna página validaba la sesión), por lo que
- * es una mejora de seguridad que NO elimina ninguna funcionalidad:
- * simplemente exige haber iniciado sesión antes de operar el ERP,
- * tal como se espera de un sistema con login.
- *
- * Ampliación (Roles y Matriz de Permisos): además de exigir sesión,
- * ahora también verifica que el rol/permisos del usuario en sesión
- * le den acceso al módulo correspondiente al script actual. Un
- * Administrador siempre tiene acceso total; un Cajero / Usuario solo
- * a los módulos marcados en su matriz de permisos. Si intenta entrar
- * escribiendo la URL directamente, se le redirige a una sección a la
- * que sí tenga acceso.
+ * includes/auth.php — Guardián de Autenticación y Verificación de Permisos por Tenant
  */
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../config/conexion.php';
+
+// ---------------------------------------------------------------
+// 1. VERIFICACIÓN ANTI-BYPASS DE ESTADO SUSPENDIDO
+// ---------------------------------------------------------------
+if (defined('TENANT_ESTADO') && TENANT_ESTADO === 'suspendido') {
+    unset($_SESSION['usuario'], $_SESSION['id_usuario'], $_SESSION['rol'], $_SESSION['permisos'], $_SESSION['session_tenant_slug']);
+    http_response_code(403);
+    die("Servicio suspendido para esta empresa.");
+}
+
+// ---------------------------------------------------------------
+// 2. VERIFICACIÓN DE PERTENENCIA DE SESIÓN AL TENANT ACTUAL
+// ---------------------------------------------------------------
+if (!empty($_SESSION['session_tenant_slug']) && $_SESSION['session_tenant_slug'] !== TENANT_SLUG) {
+    // La sesión activa pertenece a otro negocio: destruir credenciales del tenant anterior
+    unset($_SESSION['usuario'], $_SESSION['id_usuario'], $_SESSION['rol'], $_SESSION['permisos'], $_SESSION['session_tenant_slug']);
+    header('Location: ' . url('login.php?empresa=' . urlencode(TENANT_SLUG)));
+    exit;
+}
+
 if (empty($_SESSION['usuario'])) {
-    header('Location: ' . url('login.php'));
+    header('Location: ' . url('login.php?empresa=' . urlencode(TENANT_SLUG)));
     exit;
 }
 
 require_once __DIR__ . '/permisos.php';
 
-// Compatibilidad con sesiones abiertas ANTES de esta actualización (no
-// tenían rol/permisos guardados en $_SESSION): se completan una sola vez
-// consultando la base de datos, sin cerrar la sesión del usuario.
 if (!isset($_SESSION['rol']) && !empty($_SESSION['id_usuario'])) {
     $stmtSesion = mysqli_prepare($conexion, "SELECT rol, permisos FROM usuarios WHERE id_usuario = ? LIMIT 1");
-    mysqli_stmt_bind_param($stmtSesion, "i", $_SESSION['id_usuario']);
-    mysqli_stmt_execute($stmtSesion);
-    $filaSesion = mysqli_stmt_get_result($stmtSesion)->fetch_assoc();
-    $_SESSION['rol'] = $filaSesion['rol'] ?? 'Administrador';
-    $_SESSION['permisos'] = decodificarPermisos($filaSesion['permisos'] ?? null);
+    if ($stmtSesion) {
+        mysqli_stmt_bind_param($stmtSesion, "i", $_SESSION['id_usuario']);
+        mysqli_stmt_execute($stmtSesion);
+        $resSesion = mysqli_stmt_get_result($stmtSesion);
+        $filaSesion = $resSesion ? mysqli_fetch_assoc($resSesion) : null;
+        mysqli_stmt_close($stmtSesion);
+        $_SESSION['rol'] = $filaSesion['rol'] ?? 'Administrador';
+        $_SESSION['permisos'] = decodificarPermisos($filaSesion['permisos'] ?? null);
+    }
 }
 
 verificarPermisoActual();

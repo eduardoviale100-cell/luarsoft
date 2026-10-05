@@ -101,7 +101,7 @@ include __DIR__ . '/includes/layout_top.php';
 
 <div class="hero-banner">
     <i class="bi bi-house-heart"></i>
-    <h1>Sistema de Ventas · Tienda Eros</h1>
+    <h1>Sistema de Ventas · <?= h(defined('TENANT_NOMBRE') ? TENANT_NOMBRE : 'Multiservicios Eros') ?></h1>
     <span class="hero-banner-sep">·</span>
     <p>Administra clientes, productos, técnicos, ventas y reportes desde un solo lugar.</p>
 </div>

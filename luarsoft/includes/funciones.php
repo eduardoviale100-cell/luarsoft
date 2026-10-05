@@ -5,12 +5,23 @@
  * Funciones auxiliares utilizadas en todo el sistema.
  */
 
-/** Genera una URL absoluta a partir de la raíz del sistema (BASE_URL). */
+/** Genera una URL absoluta a partir de la raíz del sistema (BASE_URL) preservando la empresa activa. */
 function url(string $path = ''): string
 {
     $base = rtrim(BASE_URL, '/');
     $path = ltrim($path, '/');
-    return $base . '/' . $path;
+    $fullUrl = $base . '/' . $path;
+
+    // Preservar la empresa activa en TODOS los enlaces y redirecciones del ERP
+    $slug = defined('TENANT_SLUG') ? TENANT_SLUG : ($_SESSION['tenant_slug'] ?? ($_SESSION['current_tenant_slug'] ?? 'eros'));
+    if (!empty($slug) && $slug !== 'eros') {
+        if (strpos($fullUrl, 'empresa=') === false) {
+            $sep = (strpos($fullUrl, '?') !== false) ? '&' : '?';
+            $fullUrl .= $sep . 'empresa=' . urlencode($slug);
+        }
+    }
+
+    return $fullUrl;
 }
 
 /** Escapa una cadena para salida segura en HTML. */

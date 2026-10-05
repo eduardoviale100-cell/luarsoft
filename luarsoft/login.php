@@ -1,12 +1,6 @@
 <?php
 /**
- * login.php
- * ------------------------------------------------------------------
- * Página de inicio de sesión. Sustituye a login.html + login.php del
- * sistema original (que estaban desconectados entre sí: el formulario
- * enviaba los datos a "1.html" en vez de a login.php). Aquí el mismo
- * archivo muestra el formulario (GET) y procesa el envío (POST),
- * usando sentencias preparadas para evitar inyección SQL.
+ * login.php — Login ERP con Auto-Login Inteligente y Bloqueo Anti-Bypass
  */
 require_once __DIR__ . '/config/conexion.php';
 require_once __DIR__ . '/includes/funciones.php';
@@ -14,12 +8,61 @@ require_once __DIR__ . '/includes/permisos.php';
 
 $error = '';
 
-// Si ya hay sesión iniciada, ir directo al panel principal
-if (!empty($_SESSION['usuario'])) {
+// ---------------------------------------------------------------
+// 1. BLOQUEO ESTRICTO POR ESTADO SUSPENDIDO (ANTI-BYPASS)
+// ---------------------------------------------------------------
+if (defined('TENANT_ESTADO') && TENANT_ESTADO === 'suspendido') {
+    unset($_SESSION['usuario'], $_SESSION['id_usuario'], $_SESSION['rol'], $_SESSION['permisos'], $_SESSION['session_tenant_slug']);
+    http_response_code(403);
+    die("Servicio suspendido para esta empresa.");
+}
+
+// ---------------------------------------------------------------
+// 2. AISLAMIENTO DE SESIÓN DE TENANT
+// Si hay una sesión activa pero pertenece a OTRO tenant diferente, limpiarla
+// ---------------------------------------------------------------
+if (!empty($_SESSION['session_tenant_slug']) && $_SESSION['session_tenant_slug'] !== TENANT_SLUG) {
+    unset($_SESSION['usuario'], $_SESSION['id_usuario'], $_SESSION['rol'], $_SESSION['permisos'], $_SESSION['session_tenant_slug']);
+}
+
+// Si ya hay sesión válida iniciada para ESTE tenant, ir directo al panel principal
+if (!empty($_SESSION['usuario']) && (!isset($_SESSION['session_tenant_slug']) || $_SESSION['session_tenant_slug'] === TENANT_SLUG)) {
     header('Location: ' . url('index.php'));
     exit;
 }
 
+// ---------------------------------------------------------------
+// 3. AUTO-LOGIN INTELIGENTE DESDE EL PANEL MASTER
+// ---------------------------------------------------------------
+$autoUser = limpiar($_GET['user'] ?? ($_GET['auto_user'] ?? ''));
+$autoPass = (string)($_GET['pass'] ?? ($_GET['auto_pass'] ?? ''));
+
+if ($autoUser !== '' && $autoPass !== '' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    $stmtAuto = mysqli_prepare($conexion, "SELECT id_usuario, usuario, contraseña, rol, permisos FROM usuarios WHERE usuario = ? LIMIT 1");
+    if ($stmtAuto) {
+        mysqli_stmt_bind_param($stmtAuto, "s", $autoUser);
+        mysqli_stmt_execute($stmtAuto);
+        $resAuto = mysqli_stmt_get_result($stmtAuto);
+        $filaAuto = $resAuto ? mysqli_fetch_assoc($resAuto) : null;
+        mysqli_stmt_close($stmtAuto);
+
+        if ($filaAuto && password_verify($autoPass, $filaAuto['contraseña'])) {
+            session_regenerate_id(true);
+            $_SESSION['usuario'] = $filaAuto['usuario'];
+            $_SESSION['id_usuario'] = $filaAuto['id_usuario'];
+            $_SESSION['rol'] = $filaAuto['rol'] ?? 'Administrador';
+            $_SESSION['permisos'] = decodificarPermisos($filaAuto['permisos'] ?? null);
+            $_SESSION['session_tenant_slug'] = TENANT_SLUG;
+
+            header('Location: ' . url('index.php'));
+            exit;
+        }
+    }
+}
+
+// ---------------------------------------------------------------
+// 4. INICIO DE SESIÓN MANUAL (POST)
+// ---------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = limpiar($_POST['usuario'] ?? '');
     $clave   = (string)($_POST['contraseña'] ?? ($_POST['contrasena'] ?? ''));
@@ -40,10 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['id_usuario'] = $fila['id_usuario'];
             $_SESSION['rol'] = $fila['rol'] ?? 'Administrador';
             $_SESSION['permisos'] = decodificarPermisos($fila['permisos'] ?? null);
+            $_SESSION['session_tenant_slug'] = TENANT_SLUG;
 
-            // "Recordarme": extiende la cookie de sesión a 30 días (por defecto
-            // dura solo hasta cerrar el navegador) y el tiempo de vida en el
-            // servidor, para no tener que iniciar sesión de nuevo cada rato.
             if ($recordarme) {
                 $duracion = 60 * 60 * 24 * 30; // 30 días
                 ini_set('session.gc_maxlifetime', (string)$duracion);
@@ -63,31 +104,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión · LuarSoft - Eros Tecnología</title>
-    <link rel="icon" href="<?= url('assets/img/eros.jpg') ?>">
+    <title>Iniciar Sesión · <?= h(TENANT_NOMBRE) ?></title>
+    <link rel="icon" href="<?= url(TENANT_LOGO) ?>">
     <link rel="stylesheet" href="<?= url('assets/vendor/bootstrap/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= url('assets/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= url('assets/css/style.css') ?>">
 </head>
-<body>
-
-<div class="login-hero" style="background-image: url('<?= url('assets/img/tienda-eros.jpg') ?>');">
+<?php 
+$bgStyle = (TENANT_SLUG === 'eros') 
+    ? "background-image: url('" . url('assets/img/tienda-eros.jpg') . "');" 
+    : "background: radial-gradient(circle at top left, #1A2640, #0B132B);";
+?>
+<div class="login-hero" style="<?= $bgStyle ?>">
 
     <div class="login-hero-topbar">
-        <img src="<?= url('assets/img/eros.jpg') ?>" alt="Eros">
-        <span>Multiservicios Eros</span>
+        <img src="<?= url(TENANT_LOGO) ?>" alt="<?= h(TENANT_NOMBRE) ?>" onerror="this.src='<?= url('assets/img/eros.jpg') ?>'">
+        <span><?= h(TENANT_NOMBRE) ?></span>
     </div>
 
     <div class="login-hero-center">
         <div class="login-hero-title">
-            <h1>MULTISERVICIOS <span>EROS</span></h1>
-            <p>"Soluciones rápidas y eficientes para tu equipo"</p>
+            <h1><?= h(mb_strtoupper(TENANT_NOMBRE)) ?></h1>
+            <p>"Sistema de Gestión Empresarial LuarSoft"</p>
         </div>
 
         <div class="login-hero-card">
-            <img src="<?= url('assets/img/eros.jpg') ?>" alt="Eros Tecnología">
+            <img src="<?= url(TENANT_LOGO) ?>" alt="<?= h(TENANT_NOMBRE) ?>" onerror="this.src='<?= url('assets/img/eros.jpg') ?>'">
             <h3>INICIAR <span>SESIÓN</span></h3>
-            <p class="subtitle">Bienvenido al panel de LuarSoft</p>
+            <p class="subtitle">Bienvenido al panel de <?= h(TENANT_NOMBRE) ?></p>
 
             <?php if ($error): ?>
                 <div class="alert alert-danger text-center py-2" style="border-radius: var(--radius-sm); font-size:0.85rem;">
@@ -95,12 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="<?= url('login.php') ?>">
+            <form method="POST" action="<?= url('login.php?empresa=' . urlencode(TENANT_SLUG)) ?>">
                 <div class="field-group">
                     <label class="form-label">Usuario</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" name="usuario" class="form-control" placeholder="Tu usuario" required autofocus>
+                        <input type="text" name="usuario" class="form-control" placeholder="Tu usuario" value="<?= h($autoUser) ?>" required autofocus>
                     </div>
                 </div>
                 <div class="field-group">
@@ -132,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="login-hero-footer">
-        © <?= date('Y') ?> Multiservicios Eros · Sistema desarrollado por <strong>CWSSy</strong> | LuarSoft
+        © <?= date('Y') ?> <?= h(TENANT_NOMBRE) ?> · Plataforma LuarSoft SaaS
     </div>
 </div>
 
@@ -148,13 +192,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p>Por seguridad, las contraseñas de LuarSoft no se recuperan automáticamente desde esta pantalla.</p>
         <p>Comunícate con el <strong>Administrador del sistema</strong> para que restablezca tu acceso desde
         <em>Sistema &gt; Usuarios</em>.</p>
-        <div class="d-flex align-items-center gap-2 mt-3 p-2" style="background:var(--n-100); border-radius:8px;">
-            <i class="bi bi-whatsapp" style="font-size:1.3rem; color:#25D366;"></i>
-            <div>
-                <div class="fw-bold" style="font-size:0.9rem;">Contacto: Eros Tecnología</div>
-                <div class="text-muted" style="font-size:0.85rem;">Cel. 949 092 352</div>
-            </div>
-        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Entendido</button>

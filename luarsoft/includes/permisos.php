@@ -56,6 +56,14 @@ function esAdministrador(): bool
 /** true si el usuario en sesión puede acceder al módulo indicado. */
 function tienePermiso(string $modulo): bool
 {
+    // 1. Verificación a nivel de Tenant / Negocio (módulos habilitados desde el Panel Master)
+    if (defined('TENANT_MODULOS') && is_array(TENANT_MODULOS)) {
+        if (!in_array($modulo, TENANT_MODULOS, true)) {
+            return false; // Deshabilitado a nivel de empresa/negocio
+        }
+    }
+
+    // 2. Verificación a nivel de Usuario (Rol Administrador vs Cajero/Usuario)
     if (esAdministrador()) { return true; }
     $permisos = $_SESSION['permisos'] ?? [];
     return in_array($modulo, $permisos, true);

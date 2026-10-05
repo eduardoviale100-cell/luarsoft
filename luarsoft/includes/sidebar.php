@@ -97,9 +97,9 @@ $menu = array_filter($menu, function ($bloqueDef) { return !empty($bloqueDef['it
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <aside class="sidebar">
     <div class="sidebar-brand">
-        <img src="<?= url('assets/img/eros.jpg') ?>" alt="Eros Tecnología">
+        <img src="<?= url(defined('TENANT_LOGO') ? TENANT_LOGO : 'assets/img/eros.jpg') ?>" alt="<?= h(defined('TENANT_NOMBRE') ? TENANT_NOMBRE : 'Multiservicios Eros') ?>">
         <div>
-            <div class="brand-text">Eros Tecnología</div>
+            <div class="brand-text"><?= h(defined('TENANT_NOMBRE') ? TENANT_NOMBRE : 'Multiservicios Eros') ?></div>
             <div class="brand-sub">LuarSoft ERP</div>
         </div>
     </div>

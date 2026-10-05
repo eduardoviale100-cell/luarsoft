@@ -3,7 +3,8 @@
 -- Incluye: el sistema LuarSoft completo + la tabla clientes_web
 -- de la web pública. Solo hace falta importar ESTE archivo.
 -- ==================================================================
-CREATE DATABASE IF NOT EXISTS `luarsoft` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+DROP DATABASE IF EXISTS `luarsoft`;
+CREATE DATABASE `luarsoft` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE `luarsoft`;
 
 -- phpMyAdmin SQL Dump
